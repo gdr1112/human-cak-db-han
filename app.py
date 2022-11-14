@@ -12,7 +12,6 @@ def db_create():
 		
 	# Heroku
     engine = create_engine("postgresql://uholaamsnycauj:e0888df034f131c4de0a1d990150af4efef839fc4ed0ca087c6e489c586d098b@ec2-52-3-200-138.compute-1.amazonaws.com:5432/d53l8l8j3pnlen", echo = False)
-
     engine.connect()
     engine.execute("""
         CREATE TABLE IF NOT EXISTS iris(
