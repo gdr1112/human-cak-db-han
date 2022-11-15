@@ -1,49 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, request
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
-from sqlalchemy.sql import text 
-import pandas as pd 
+from datetime import date
 import psycopg2
-import time
 import json
-import os
-
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--disable-gpu")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument('--disable-dev-shm-usage')
-chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-
-# 크롤링할 창 열기
-driver = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=chrome_options)
-driver.get("https://safecity.seoul.go.kr/acdnt/sbwyIndex.do")
-
-# 크롤링 변수설정
-parentElement = driver.find_elements(By.XPATH, '//*[@id="dv_as_timeline"]/li')
-
-# 사고 정보 리스트
-subli=[]
-
-# 사고 정보 리스트에 크롤링해서 정보 넣기 (ul 태그 아래 있는 li 반복 뽑기)
-for i in parentElement:
-    i.click()
-    time.sleep(0.05)
-    a = i.text
-    subli.append(a)
-    i.click()
-
-# 카톡으로 보내줄 문자열
-sbstr=""
-
-for item in subli:
-    sbstr = sbstr + item + "\n"
-
-
 
 app = Flask(__name__)
 
@@ -51,13 +11,34 @@ app = Flask(__name__)
 def index():
     return "hello"
 
-
-## 크롤링
+## 오늘의 사고내역 보내주기
 @app.route('/api/saysubway', methods=['POST'])
 def saysubway():
     body = request.get_json()
     print(body)
     print(body['userRequest']['utterance'])
+
+    # db연결
+    conn = psycopg2.connect(host="ec2-52-3-200-138.compute-1.amazonaws.com", 
+                            dbname="d53l8l8j3pnlen", 
+                            user="uholaamsnycauj", 
+                            password="e0888df034f131c4de0a1d990150af4efef839fc4ed0ca087c6e489c586d098b", 
+                            port="5432")
+
+    # 데이터 조작 인스턴스 생성
+    cur = conn.cursor()
+
+    # 오늘 날짜 (YYYY-MM-DD 구하기)
+    today = date.today().isoformat() + '%'
+
+    # DB SELECT
+    cur.execute(f"SELECT * FROM subdata WHERE acctime LIKE '{today}' ")
+    result_all = cur.fetchall()
+
+    sbstr=""
+    for i in result_all:
+        for j in i:
+            sbstr = sbstr + j + "\n"
 
     responseBody = {
         "version": "2.0",
@@ -72,32 +53,6 @@ def saysubway():
         }
     }
     return responseBody
-
-
-
-# ## DB 연결 Local
-# def db_create():
-#     # 로컬
-# 	# engine = create_engine("postgresql://postgres:1234@localhost:5432/chatbot", echo = False)
-		
-# 	# # Heroku
-#     # engine = create_engine("postgresql://avcdjxublgzxpt:208785dbb0dc2ae32038697ee3e56d141f070143b047110ac8886962cd59f969@ec2-52-1-17-228.compute-1.amazonaws.com:5432/d8i34lbtd4iht5", echo = False)
-
-#     # engine.connect()
-
-#     # postgre db 연결 - 개인설정 참고
-#     conn = psycopg2.connect(host="ec2-52-1-17-228.compute-1.amazonaws.com", 
-#                             dbname="d8i34lbtd4iht5", 
-#                             user="avcdjxublgzxpt", 
-#                             password="208785dbb0dc2ae32038697ee3e56d141f070143b047110ac8886962cd59f969", 
-#                             port="5432")
-    
-#     # 데이터 조작 인스턴스 생성
-#     cur = conn.cursor()
-
-#     # 테이블 생성(create)
-#     cur.execute("CREATE TABLE IF NOT EXISTS subdata(subacc VARCHAR(20) NOT NULL, acctime VARCHAR(30) NOT NULL, content VARCHAR(300) NOT NULL);")
-#     conn.commit()
 
 
 # 1단계 : 코드 수정
@@ -190,14 +145,6 @@ def calCulator():
     }
 
     return responseBody
-
-
-
-
-
-
-
-
 
 
 
