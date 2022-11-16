@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return "hello"
+    return "hello human"
 
 ## 오늘의 사고내역 보내주기
 @app.route('/api/saysubway', methods=['POST'])
