@@ -20,10 +20,10 @@ def saysubway():
     print(body['userRequest']['utterance'])
 
     # db연결
-    conn = psycopg2.connect(host="ec2-52-3-200-138.compute-1.amazonaws.com", 
-                            dbname="d53l8l8j3pnlen", 
-                            user="uholaamsnycauj", 
-                            password="e0888df034f131c4de0a1d990150af4efef839fc4ed0ca087c6e489c586d098b", 
+    conn = psycopg2.connect(host="ec2-23-21-207-93.compute-1.amazonaws.com", 
+                            dbname="d3oubpekvnbupv", 
+                            user="grxhirqndvyqvv", 
+                            password="6f1afaafe16d245c70666bdb8c831aa876e62b380a1544f5dc832c51f27cece6", 
                             port="5432")
 
     # 데이터 조작 인스턴스 생성
