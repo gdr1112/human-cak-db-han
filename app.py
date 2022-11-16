@@ -2,6 +2,7 @@
 
 from flask import Flask, request
 from datetime import date
+import requests
 import psycopg2
 import json
 
@@ -32,13 +33,14 @@ def saysubway():
     today = date.today().isoformat() + '%'
 
     # DB SELECT
-    cur.execute(f"SELECT * FROM subdata WHERE acctime LIKE '{today}' ")
+    cur.execute(f"SELECT * FROM subdata WHERE acctime LIKE '{today}' order by acctime ASC")
     result_all = cur.fetchall()
 
     sbstr=""
     for i in result_all:
         for j in i:
             sbstr = sbstr + j + "\n"
+        sbstr = sbstr + "\n"
 
     responseBody = {
         "version": "2.0",
@@ -54,13 +56,48 @@ def saysubway():
     }
     return responseBody
 
+# 경로 url 전달 함수
+def location(searching):
+    url = 'https://dapi.kakao.com/v2/local/search/keyword.json?query={}'.format(searching)
+    headers = {
+        "Authorization": "KakaoAK bbc0593ca1fbd88db71ccfdd5421ef1e"
+    }
+    destination = 'https://map.kakao.com/link/to/' + (requests.get(url, headers = headers).json()['documents'])[0].get('id')
+    
+    return destination
+
+# 경로찾기 응답
+@app.route('/api/goto', methods=['POST'])
+def goto():
+    body = request.get_json()
+    print(body)
+    params_df = (body['action']['params'])['sys_location']
+    print(type(params_df))
+
+    answer_text = str(location(params_df))
+
+    responseBody = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": answer_text
+                    }
+                }
+            ]
+        }
+    }
+
+    return responseBody
+
 
 # 1단계 : 코드 수정
 # 2단계 : 스킬 등록 (URL)
 # 3단계 : 시나리오에서 등록한 스킬 호출
 # 4단계 : 배포
 
-## 카카오톡 텍스트형 응답
+# 카카오톡 텍스트형 응답
 @app.route('/api/sayHello', methods=['POST'])
 def sayHello():
     body = request.get_json()
